@@ -1,0 +1,37 @@
+# non-interaktivní shell → konec (jinak se rozbije scp/rsync)
+case $- in *i*) ;; *) return ;; esac
+
+# systémové defaults: Fedora má /etc/bashrc, Debian/Ubuntu /etc/bash.bashrc
+[ -f /etc/bashrc ] && . /etc/bashrc
+[ -f /etc/bash.bashrc ] && . /etc/bash.bashrc
+
+# ponytail: case místo =~ — funguje i tam, kde je jen jedna z těch cest
+case ":$PATH:" in
+    *:"$HOME/.local/bin":*) ;;
+    *) PATH="$HOME/.local/bin:$HOME/bin:$PATH" ;;
+esac
+export PATH
+
+for rc in "$HOME"/.bashrc.d/*; do
+    [ -f "$rc" ] && . "$rc"
+done
+unset rc
+
+alias fuckPrompt='export PS1="\u >"'
+
+# volitelné nástroje — na serveru nejsou, bez guardu by řvaly při každém loginu
+command -v starship >/dev/null && eval "$(starship init bash)"
+command -v ng >/dev/null && source <(ng completion script)
+
+export NVM_DIR="$HOME/.config/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
+
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+
+# stroj-specifické: tajemství, firemní VPN. Mimo chezmoi, mimo git.
+[ -f "$HOME/.bashrc.local" ] && . "$HOME/.bashrc.local"
+
+# sdkman musí zůstat úplně poslední
+export SDKMAN_DIR="$HOME/.sdkman"
+[[ -s "$SDKMAN_DIR/bin/sdkman-init.sh" ]] && . "$SDKMAN_DIR/bin/sdkman-init.sh"
